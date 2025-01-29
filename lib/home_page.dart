@@ -28,22 +28,31 @@ class _HomePageState extends State<HomePage> {
           !db.habitList[index][1]; // Toggle habit started state
     });
 
-    // If the habit is being started, start the timer.
     if (db.habitList[index][1]) {
       Timer.periodic(const Duration(seconds: 1), (timer) {
-        if (!db.habitList[index][1]) {
+        if (!db.habitList[index][1] ||
+            db.habitList[index][2] >= db.habitList[index][3] * 60) {
+          // Stop the timer if the habit is completed or stopped
           timer.cancel();
+
+          if (db.habitList[index][2] >= db.habitList[index][3] * 60) {
+            // Mark the habit as completed (add a flag or set it as completed)
+            setState(() {
+              db.habitList[index][4] =
+                  true; // Assuming you add a completed state at index 4
+              db.updateDataBase();
+            });
+
+            // You can also add a message or set the status for UI
+          }
         } else {
           setState(() {
             db.habitList[index][2] =
                 elapsedTime + DateTime.now().difference(startTime).inSeconds;
-            db.updateDataBase(); // Update the database after every second
+            db.updateDataBase();
           });
         }
       });
-    } else {
-      // If the habit is stopped, ensure the final time is saved.
-      db.updateDataBase(); // Call updateDataBase() when habit is stopped
     }
   }
 
@@ -77,7 +86,8 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           actions: [
-            TextButton(
+            MaterialButton(
+              color: Colors.green[800],
               onPressed: () {
                 setState(() {
                   db.habitList[index][0] = habitNameController.text.isEmpty
@@ -89,7 +99,10 @@ class _HomePageState extends State<HomePage> {
                 });
                 Navigator.pop(context);
               },
-              child: const Text('Save'),
+              child: const Text(
+                'Save',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
@@ -174,6 +187,9 @@ class _HomePageState extends State<HomePage> {
           ? ListView.builder(
               itemCount: db.habitList.length,
               itemBuilder: (context, index) {
+                // Convert the goal (in minutes) to seconds
+                int goalInSeconds = db.habitList[index][3] * 60;
+                bool isCompleted = db.habitList[index][2] >= goalInSeconds;
                 return Dismissible(
                   key: UniqueKey(),
                   onDismissed: (_) => deleteHabit(index),
@@ -181,6 +197,7 @@ class _HomePageState extends State<HomePage> {
                   child: HabitTile(
                     habitIndex: 1,
                     database: HiveDataBase(),
+                    isCompleted: isCompleted,
                     habitName: db.habitList[index][0],
                     habitStarted: db.habitList[index][1],
                     onTap: () => habitStarted(index),

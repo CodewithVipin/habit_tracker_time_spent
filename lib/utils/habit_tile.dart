@@ -12,10 +12,13 @@ class HabitTile extends StatelessWidget {
   final int habitIndex; // Index of the habit in the habitList
   final HiveDataBase database; // HiveDataBase instance
 
+  final bool isCompleted;
+
   const HabitTile({
     super.key,
     required this.habitName,
     required this.habitStarted,
+    required this.isCompleted,
     required this.onTap,
     required this.settingsTapped,
     required this.timeGoal,
@@ -49,7 +52,7 @@ class HabitTile extends StatelessWidget {
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: Colors.grey[100],
+          color: isCompleted ? Colors.grey.shade400 : Colors.grey[100],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -74,10 +77,23 @@ class HabitTile extends StatelessWidget {
                               : Colors.orange,
                         ),
                         Center(
-                            child: Icon(
-                          habitStarted ? Icons.pause : Icons.play_arrow,
-                          size: 25,
-                        ))
+                          child: !isCompleted
+                              ? Icon(
+                                  habitStarted ? Icons.pause : Icons.play_arrow,
+                                  size: 25,
+                                )
+                              : Icon(
+                                  Icons.done,
+                                  color: Colors.green,
+                                  size: 35,
+                                  shadows: [
+                                    Shadow(
+                                        offset: Offset(0, 3),
+                                        blurRadius: 1,
+                                        color: Colors.green.shade800)
+                                  ],
+                                ),
+                        ),
                       ],
                     ),
                   ),
@@ -88,21 +104,40 @@ class HabitTile extends StatelessWidget {
                   children: [
                     Text(
                       habitName,
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      style: isCompleted
+                          ? TextStyle(
+                              decoration: TextDecoration.lineThrough,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey.shade800,
+                              fontSize: 18,
+                            )
+                          : TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey.shade800,
+                              fontSize: 18,
+                            ),
                     ),
                     SizedBox(height: 4),
-                    Text(
-                      '${formatToMinSec(timeSpent)} / $timeGoal = ${(percentCompleted() * 100).toStringAsFixed(0)} %',
-                      style: TextStyle(color: Colors.grey),
-                    ),
+                    !isCompleted
+                        ? Text(
+                            '${formatToMinSec(timeSpent)} / $timeGoal = ${(percentCompleted() * 100).toStringAsFixed(0)} %',
+                            style: TextStyle(color: Colors.grey),
+                          )
+                        : Text(
+                            "Completed!",
+                            style: TextStyle(
+                                color: Colors.green.shade900,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16),
+                          ),
                   ],
                 ),
               ],
             ),
             GestureDetector(
               onTap: settingsTapped,
-              child: Icon(Icons.settings),
+              child: Visibility(
+                  visible: !isCompleted, child: Icon(Icons.settings)),
             ),
           ],
         ),
